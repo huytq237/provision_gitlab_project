@@ -1,0 +1,6 @@
+department: dept123
+application: app456
+
+components:
+  documents:
+    enabled: true

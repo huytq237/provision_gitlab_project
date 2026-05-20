@@ -1,0 +1,8 @@
+department: ktthud
+application: myapp
+
+components:
+  backend:
+    enabled: true
+    services:
+      - my service

@@ -1,0 +1,24 @@
+department: test-full
+application: full-app
+
+components:
+  documents:
+    enabled: true
+  backend:
+    enabled: true
+    services:
+      - svc-alpha
+      - svc-beta
+    common_lib: true
+  frontend:
+    enabled: true
+    apps:
+      - web-app
+      - mobile-app
+    ui_libs: true
+  tools:
+    enabled: true
+  deployment:
+    enabled: true
+  quality_security:
+    enabled: true

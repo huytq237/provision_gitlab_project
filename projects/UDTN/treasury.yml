@@ -1,0 +1,26 @@
+department: udtn
+application: treasury
+
+components:
+  documents:
+    enabled: true
+
+  backend:
+    enabled: true
+    services:
+      - treasury-core
+      - treasury-reporting
+      - treasury-integration
+    common_lib: true
+
+  frontend:
+    enabled: true
+    apps:
+      - treasury-web
+    ui_libs: false
+
+  deployment:
+    enabled: true
+
+  quality_security:
+    enabled: true

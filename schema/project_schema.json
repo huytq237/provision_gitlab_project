@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GitLab Project Provision Schema",
+  "type": "object",
+  "required": ["department", "application"],
+  "additionalProperties": false,
+  "properties": {
+    "department": {
+      "type": "string",
+      "description": "Tên department (Group cấp 1). Chỉ chữ thường, số, dấu gạch ngang.",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+      "minLength": 2,
+      "maxLength": 64
+    },
+    "application": {
+      "type": "string",
+      "description": "Tên application (Subgroup cấp 2). Chỉ chữ thường, số, dấu gạch ngang.",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+      "minLength": 2,
+      "maxLength": 64
+    },
+    "components": {
+      "type": "object",
+      "description": "Các component cần tạo (tất cả optional).",
+      "additionalProperties": false,
+      "properties": {
+        "documents": {
+          "$ref": "#/definitions/simpleComponent"
+        },
+        "backend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "services": {
+              "type": "array",
+              "description": "Danh sách tên các service project trong backend.",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"
+              },
+              "uniqueItems": true
+            },
+            "common_lib": {
+              "type": "boolean",
+              "description": "Tạo project [app]-common-lib trong backend.",
+              "default": false
+            }
+          }
+        },
+        "frontend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "apps": {
+              "type": "array",
+              "description": "Danh sách tên các app project trong frontend.",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"
+              },
+              "uniqueItems": true
+            },
+            "ui_libs": {
+              "type": "boolean",
+              "description": "Tạo project [app]-ui-libs trong frontend.",
+              "default": false
+            }
+          }
+        },
+        "tools": {
+          "$ref": "#/definitions/simpleComponent"
+        },
+        "deployment": {
+          "$ref": "#/definitions/simpleComponent"
+        },
+        "quality_security": {
+          "$ref": "#/definitions/simpleComponent"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "simpleComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" }
+      }
+    }
+  }
+}

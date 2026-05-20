@@ -1,0 +1,60 @@
+# Template khai báo project cho GitLab Provisioner
+# Copy file này vào projects/<department>/<application>.yml và chỉnh sửa.
+#
+# Quy tắc đặt tên:
+#   - Chỉ dùng chữ thường (a-z), số (0-9), dấu gạch ngang (-)
+#   - Không bắt đầu hoặc kết thúc bằng dấu gạch ngang
+#   - Ví dụ hợp lệ: udtn, treasury, payment-gateway, core-banking
+
+# [BẮT BUỘC] Tên department — sẽ tạo group cấp 1 trên cả 2 GitLab
+department: ten-department
+
+# [BẮT BUỘC] Tên application — sẽ tạo subgroup cấp 2 bên trong department
+application: ten-application
+
+# [TÙY CHỌN] Các component cần tạo.
+# Bỏ qua hoặc đặt enabled: false để không tạo component đó.
+components:
+
+  # Repo tài liệu (requirements, design docs, API specs...)
+  # → Tạo project: <department>/<application>/<application>-documents
+  documents:
+    enabled: false
+
+  # Nhóm backend services
+  # → Tạo subgroup: <department>/<application>/<application>-backend
+  backend:
+    enabled: false
+    # Danh sách các microservice/repo trong backend
+    services:
+      - ten-service-1
+      - ten-service-2
+    # Tạo repo thư viện dùng chung cho backend
+    # → <application>-common-lib
+    common_lib: false
+
+  # Nhóm frontend apps
+  # → Tạo subgroup: <department>/<application>/<application>-frontend
+  frontend:
+    enabled: false
+    # Danh sách các ứng dụng frontend (web app, mobile...)
+    apps:
+      - ten-app-1
+    # Tạo repo UI component library dùng chung
+    # → <application>-ui-libs
+    ui_libs: false
+
+  # Repo scripts nội bộ, automation tools
+  # → <department>/<application>/<application>-tools
+  tools:
+    enabled: false
+
+  # Repo Helm chart, Kubernetes manifests, Ansible playbook...
+  # → <department>/<application>/<application>-deployment
+  deployment:
+    enabled: false
+
+  # Repo test scripts, SonarQube config, security scan...
+  # → <department>/<application>/<application>-quality-security
+  quality_security:
+    enabled: false

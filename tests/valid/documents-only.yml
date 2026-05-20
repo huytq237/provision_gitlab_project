@@ -1,0 +1,6 @@
+department: test-docs
+application: docs-app
+
+components:
+  documents:
+    enabled: true

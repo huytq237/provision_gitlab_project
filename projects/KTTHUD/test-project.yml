@@ -1,0 +1,23 @@
+department: ktthud
+application: test-project
+
+components:
+  documents:
+    enabled: true
+
+  backend:
+    enabled: true
+    services:
+      - test-project-api
+    common_lib: false
+
+  frontend:
+    enabled: true
+    apps:
+      - test-project-web
+
+  deployment:
+    enabled: true
+
+  quality_security:
+    enabled: true

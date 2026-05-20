@@ -1,0 +1,7 @@
+department: test-be
+application: be-app
+
+components:
+  backend:
+    enabled: true
+    common_lib: true

@@ -1,0 +1,134 @@
+# GitOps GitLab Provisioner — CI/CD Pipeline
+#
+# Stages:
+#   validate  → chạy khi mở/cập nhật MR: kiểm tra YAML hợp lệ
+#   provision → chạy sau khi MR merge vào main: tạo group/project trên cả 2 GitLab
+#
+# Biến cần cấu hình trong GitLab CI/CD Settings → Variables (masked):
+#   EE_URL    — https://gitlab-dso.ocb.vn
+#   EE_TOKEN  — Personal/Group Access Token của EE (api scope)
+#   CE_URL    — https://git.ocb.vn
+#   CE_TOKEN  — Personal/Group Access Token của CE (api scope)
+
+stages:
+  - validate
+  - provision
+  - audit
+
+default:
+  image: python:3.12-slim
+  before_script:
+    - pip install --quiet -r requirements.txt
+
+# ─────────────────────────────────────── Validate (MR stage)
+
+validate:yaml:
+  stage: validate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - echo "=== Validating changed YAML files ==="
+    - |
+      CHANGED=$(git diff --name-only origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME...HEAD -- 'projects/**/*.yml' 'projects/**/*.yaml' 2>/dev/null || true)
+      if [ -z "$CHANGED" ]; then
+        echo "No project YAML files changed — skipping validation."
+        exit 0
+      fi
+      echo "Files to validate:"
+      echo "$CHANGED"
+      python scripts/validate.py --files $CHANGED
+  allow_failure: false
+
+# Validate toàn bộ khi push lên main (safety net)
+validate:all:
+  stage: validate
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - projects/**/*.yml
+        - projects/**/*.yaml
+        - schema/project_schema.json
+  script:
+    - echo "=== Validating all project YAML files ==="
+    - python scripts/validate.py --all
+
+# ─────────────────────────────────────── Provision (post-merge)
+
+provision:changed:
+  stage: provision
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - projects/**/*.yml
+        - projects/**/*.yaml
+  environment:
+    name: production
+  script:
+    - echo "=== Provisioning changed projects ==="
+    - python scripts/provision.py --changed-only
+  artifacts:
+    reports: {}
+    when: always
+
+# Manual trigger: provision lại toàn bộ (dùng khi cần sync lại)
+provision:all:
+  stage: provision
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  environment:
+    name: production
+  script:
+    - echo "=== Provisioning ALL projects (manual trigger) ==="
+    - python scripts/provision.py --all
+  allow_failure: false
+
+# ─────────────────────────────────────── Audit (on-demand / schedule)
+# Các job này chạy thủ công hoặc theo GitLab CI Schedule (Admin → CI/CD → Schedules).
+# Biến CI cần thêm trong Settings → Variables: AUDIT_MODE, ALERT_EMAIL (optional)
+# Biến AUDIT_MODE cho phép schedule chọn loại audit: "naming" | "rogue" | "all"
+#
+# Ví dụ tạo schedule daily 06:00:
+#   Cron: 0 6 * * *  |  Branch: main  |  Variable: AUDIT_MODE=all
+
+.audit_base: &audit_base
+  stage: audit
+  environment:
+    name: production
+  allow_failure: true   # WARN không block pipeline
+
+audit:naming:
+  <<: *audit_base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $AUDIT_MODE == "naming"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  script:
+    - echo "=== Audit naming convention ==="
+    - |
+      python scripts/audit_service.py --once --mode naming \
+        ${ALERT_EMAIL:+--alert-email "$ALERT_EMAIL"}
+
+audit:rogue:
+  <<: *audit_base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $AUDIT_MODE == "rogue"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  script:
+    - echo "=== Audit rogue repos ==="
+    - |
+      python scripts/audit_service.py --once --mode rogue \
+        ${ALERT_EMAIL:+--alert-email "$ALERT_EMAIL"}
+
+audit:all:
+  <<: *audit_base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $AUDIT_MODE == "all"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  script:
+    - echo "=== Full audit (naming + rogue) ==="
+    - |
+      python scripts/audit_service.py --once --mode all \
+        ${ALERT_EMAIL:+--alert-email "$ALERT_EMAIL"}

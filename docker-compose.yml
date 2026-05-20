@@ -1,0 +1,72 @@
+version: '3.8'
+
+# 2 GitLab CE instances để test local:
+#   gitlab-ee  → http://localhost:8080  (đóng vai gitlab-dso.ocb.vn)
+#   gitlab-ce  → http://localhost:8081  (đóng vai git.ocb.vn)
+#
+# Khởi động: docker compose up -d
+# Chờ ~5 phút rồi lấy root password:
+#   docker exec gitlab-ee grep 'Password:' /etc/gitlab/initial_root_password
+#   docker exec gitlab-ce grep 'Password:' /etc/gitlab/initial_root_password
+
+services:
+  gitlab-ee:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab-ee
+    hostname: localhost
+    ports:
+      - "8080:80"
+      - "8443:443"
+      - "2222:22"
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        # Tắt các tính năng không cần thiết cho test
+        prometheus_monitoring['enable'] = false
+        alertmanager['enable'] = false
+        node_exporter['enable'] = false
+        redis_exporter['enable'] = false
+        postgres_exporter['enable'] = false
+        pgbouncer_exporter['enable'] = false
+        gitlab_exporter['enable'] = false
+    volumes:
+      - gitlab-ee-config:/etc/gitlab
+      - gitlab-ee-logs:/var/log/gitlab
+      - gitlab-ee-data:/var/opt/gitlab
+    shm_size: '256m'
+    restart: unless-stopped
+
+  gitlab-ce:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab-ce
+    hostname: localhost
+    ports:
+      - "8081:80"
+      - "8444:443"
+      - "2223:22"
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2223
+        prometheus_monitoring['enable'] = false
+        alertmanager['enable'] = false
+        node_exporter['enable'] = false
+        redis_exporter['enable'] = false
+        postgres_exporter['enable'] = false
+        pgbouncer_exporter['enable'] = false
+        gitlab_exporter['enable'] = false
+    volumes:
+      - gitlab-ce-config:/etc/gitlab
+      - gitlab-ce-logs:/var/log/gitlab
+      - gitlab-ce-data:/var/opt/gitlab
+    shm_size: '256m'
+    restart: unless-stopped
+
+volumes:
+  gitlab-ee-config:
+  gitlab-ee-logs:
+  gitlab-ee-data:
+  gitlab-ce-config:
+  gitlab-ce-logs:
+  gitlab-ce-data:

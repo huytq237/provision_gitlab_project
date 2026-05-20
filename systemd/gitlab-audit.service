@@ -1,0 +1,25 @@
+[Unit]
+Description=GitLab Audit Service — naming convention & rogue repo detection
+Documentation=https://gitlab.ocb.vn/provision/provision_gitlab_project
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ht
+Group=ht
+WorkingDirectory=/home/ht/provision_gitlab_project
+ExecStart=/home/ht/provision_gitlab_project/.venv/bin/python scripts/audit_service.py
+Restart=on-failure
+RestartSec=30
+EnvironmentFile=/home/ht/provision_gitlab_project/.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gitlab-audit
+
+MemoryMax=256M
+CPUQuota=20%
+
+[Install]
+WantedBy=multi-user.target
